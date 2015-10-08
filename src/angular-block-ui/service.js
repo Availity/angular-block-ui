@@ -30,12 +30,18 @@ blkUI.factory('blockUI', function(blockUIConfig, $timeout, blockUIUtils, $docume
       state.blockCount++;
 
       // Check if the focused element is part of the block scope
-
-      var $ae = angular.element($document[0].activeElement);
+      // http://stackoverflow.com/questions/7904417/jquery-ui-creates-unspecified-error-when-loading-iframe-in-ie9
+      var $ae;
+      try {
+        $ae = angular.element($document[0].activeElement);
+      } catch (error) {
+        document.documentElement.focus();
+        $ae = angular.element($document[0].activeElement);
+      }
 
       if($ae.length && blockUIUtils.isElementInBlockScope($ae, self)) {
 
-        // Let the active element lose focus and store a reference 
+        // Let the active element lose focus and store a reference
         // to restore focus when we're done (reset)
 
         self._restoreFocus = $ae[0];
@@ -92,21 +98,21 @@ blkUI.factory('blockUI', function(blockUIConfig, $timeout, blockUIUtils, $docume
     };
 
     this.reset = function(executeCallbacks) {
-      
+
       self._cancelStartTimeout();
       state.blockCount = 0;
       state.blocking = false;
 
       // Restore the focus to the element that was active
-      // before the block start, but not if the user has 
+      // before the block start, but not if the user has
       // focused something else while the block was active.
 
-      if(self._restoreFocus && 
+      if(self._restoreFocus &&
          (!$document[0].activeElement || $document[0].activeElement === $body[0])) {
         self._restoreFocus.focus();
         self._restoreFocus = null;
       }
-      
+
       try {
         if (executeCallbacks) {
           angular.forEach(doneCallbacks, function(cb) {
@@ -170,14 +176,14 @@ blkUI.factory('blockUI', function(blockUIConfig, $timeout, blockUIUtils, $docume
       delete instances[idOrInstance.state().id];
     }
   };
-  
+
   instances.locate = function(request) {
 
     var result = [];
 
     // Add function wrappers that will be executed on every item
     // in the array.
-    
+
     blockUIUtils.forEachFnHook(result, 'start');
     blockUIUtils.forEachFnHook(result, 'stop');
 
